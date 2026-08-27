@@ -2,525 +2,602 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <title>Trazabilidad Logística Inteligente</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sistema de Trazabilidad e Inventario Logístico</title>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+
+  <!-- Scanner de Barras / QR -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <!-- Leaflet para el Mapa -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
   <style>
-    :root {
-      --primary: #1e3a8a;
-      --secondary: #0284c7;
-      --bg: #f8fafc;
-      --card: #ffffff;
-      --text: #0f172a;
-      --border: #e2e8f0;
-      --success: #16a34a;
-    }
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+      font-family: Arial, sans-serif;
       margin: 0;
-      padding: 15px;
-    }
-    header {
-      background-color: var(--primary);
-      color: white;
-      padding: 15px 20px;
-      text-align: center;
-      border-radius: 8px;
-      margin-bottom: 20px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 20px;
-    }
-    .card {
-      background: var(--card);
       padding: 20px;
+      background-color: #f4f6f9;
+      color: #333;
+    }
+
+    h1, h2 {
+      color: #1f3a60;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
       border-radius: 8px;
-      border: 1px solid var(--border);
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    h2 {
-      margin-top: 0;
-      color: var(--primary);
-      font-size: 1.2rem;
-      border-bottom: 2px solid var(--secondary);
-      padding-bottom: 5px;
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 15px;
     }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+
     label {
-      display: block;
-      margin-top: 10px;
-      font-weight: 600;
-      font-size: 0.9rem;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 5px;
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      box-sizing: border-box;
-      font-size: 0.9rem;
-    }
-    button {
-      background-color: var(--secondary);
-      color: white;
       font-weight: bold;
+      margin-bottom: 5px;
+      font-size: 0.9em;
+    }
+
+    input, select, textarea, button {
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1em;
+    }
+
+    button {
+      background-color: #28a745;
+      color: white;
       border: none;
       cursor: pointer;
-      margin-top: 15px;
-      transition: background 0.2s;
+      font-weight: bold;
+      transition: background 0.3s;
     }
+
     button:hover {
-      background-color: var(--primary);
+      background-color: #218838;
     }
+
     .btn-secondary {
-      background-color: #64748b;
+      background-color: #007bff;
     }
+
     .btn-secondary:hover {
-      background-color: #475569;
+      background-color: #0069d9;
     }
+
     #reader {
       width: 100%;
-      min-height: 250px;
-      background: #000;
-      border-radius: 6px;
+      max-width: 400px;
+      margin: 10px auto;
+      display: none;
+    }
+
+    #map {
+      height: 350px;
+      width: 100%;
+      border-radius: 8px;
       margin-top: 10px;
     }
-    .code-display {
-      text-align: center;
-      margin-top: 15px;
-      padding: 10px;
-      border: 1px dashed var(--border);
-      border-radius: 6px;
-    }
-    .code-display img, .code-display canvas, .code-display svg {
-      max-width: 100%;
-      height: auto;
-    }
+
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 10px;
-      font-size: 0.85rem;
+      margin-top: 15px;
     }
+
     th, td {
-      border: 1px solid var(--border);
+      border: 1px solid #ddd;
       padding: 8px;
       text-align: left;
     }
+
     th {
-      background-color: #f1f5f9;
+      background-color: #1f3a60;
+      color: white;
     }
+
     .status-msg {
-      margin-top: 10px;
       padding: 10px;
-      border-radius: 6px;
+      margin-bottom: 15px;
+      border-radius: 5px;
       display: none;
-      font-size: 0.9rem;
     }
+
     .status-success {
-      background: #dcfce7;
-      color: #15803d;
+      background-color: #d4edda;
+      color: #155724;
     }
+
     .status-error {
-      background: #fee2e2;
-      color: #b91c1c;
+      background-color: #f8d7da;
+      color: #721c24;
     }
   </style>
 </head>
 <body>
 
-  <header>
-    <h1>Sistema de Trazabilidad e Inventario Logístico</h1>
-    <p style="margin: 5px 0 0 0; font-size: 0.9rem;">Integración IoT, Cámara, GS1 y Google Sheets</p>
-  </header>
+<div class="container">
+  <h1>Trazabilidad Logística Inteligente</h1>
 
-  <div id="statusMsg" class="status-msg"></div>
+  <div id="statusBox" class="status-msg"></div>
 
-  <div class="grid">
-
-    <!-- MODULO 1: REGISTRO DE PRODUCTO -->
-    <div class="card">
-      <h2>1. Registro de Producto</h2>
-      <form id="prodForm">
-        <label>ID Producto *</label>
-        <input type="text" id="idProducto" placeholder="Ej: UPEC-ALM-P001" required>
-
-        <label>Nombre / Descripción *</label>
-        <input type="text" id="nombre" placeholder="Ej: Papa Súper Chola 50kg" required>
-
-        <label>Categoría *</label>
-        <select id="categoria" required>
-          <option value="">Seleccione...</option>
-          <option value="Agrícola">Agrícola</option>
-          <option value="Procesados">Procesados</option>
-          <option value="Empaques">Empaques</option>
-          <option value="Insumos">Insumos</option>
-        </select>
-
-        <label>Lote *</label>
-        <input type="text" id="lote" placeholder="Ej: L03-2026" required>
-
-        <label>Cantidad Inicial *</label>
-        <input type="number" id="cantidad" min="1" value="100" required>
-
-        <label>Fecha Vencimiento</label>
-        <input type="date" id="fechaVencimiento">
-
-        <label>Origen *</label>
-        <input type="text" id="origen" value="Huaca, Ecuador" required>
-
-        <label>Destino *</label>
-        <input type="text" id="destino" value="Bodega Central" required>
-
-        <label>Tipo de Identificador *</label>
-        <select id="tipoIdentificacion" required>
-          <option value="Code 128">Código de Barras (Code 128)</option>
-          <option value="QR">Código QR</option>
-          <option value="RFID">Etiqueta RFID Simula</option>
-        </select>
-
-        <button type="submit">Registrar Producto y Generar Código</button>
-      </form>
+  <!-- LECTOR QR / BARRAS / RFID -->
+  <div class="card">
+    <h2>Lectura y Captura Automática</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button class="btn-secondary" onclick="iniciarCamara()">Escanear QR / Código de Barras</button>
+      <button class="btn-secondary" onclick="detenerCamara()">Detener Cámara</button>
     </div>
 
-    <!-- MODULO 2: GENERACIÓN Y VISUALIZACIÓN DE CÓDIGOS -->
-    <div class="card">
-      <h2>2. Identificador Generado</h2>
-      <div id="codeDisplay" class="code-display">
-        <p style="color: #64748b;">Registre un producto para visualizar el código correspondiente.</p>
-      </div>
-      <div id="codeValue" style="text-align: center; font-weight: bold; margin-top: 10px;"></div>
-      <button id="btnPrint" style="display:none;" onclick="window.print()">Imprimir / Guardar Etiqueta</button>
+    <div id="reader"></div>
+
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Ingreso / Modu-RFID / Lector USB:</label>
+      <input type="text" id="rfidInput" placeholder="Escanee la tarjeta RFID o presione Enter..." onchange="procesarLecturaRFID(this.value)">
     </div>
-
-    <!-- MODULO 3 & 4: LECTOR Y SIMULADOR RFID -->
-    <div class="card">
-      <h2>3. Escáner y Simulación RFID</h2>
-      <button id="btnCam" onclick="iniciarCamara()">Activar Cámara</button>
-      <div id="reader"></div>
-
-      <label style="margin-top: 15px;">O cargar imagen con código:</label>
-      <input type="file" id="qrInputFile" accept="image/*" onchange="leerDesdeImagen(this)">
-
-      <hr style="margin: 20px 0; border: 0; border-top: 1px solid var(--border);">
-
-      <label>Simulador de Lectura RFID (EPC / UID):</label>
-      <input type="text" id="rfidInput" placeholder="Ej: RFID-EPC-UPEC-ALM-P001">
-      <button class="btn-secondary" onclick="simularLecturaRFID()">Simular Lectura RFID</button>
-    </div>
-
-    <!-- MODULO 6: REGISTRO DE EVENTO LOGÍSTICO -->
-    <div class="card">
-      <h2>4. Registrar Evento Logístico</h2>
-      <form id="eventForm">
-        <label>ID Producto Leído *</label>
-        <input type="text" id="evtIdProd" readonly style="background: #f1f5f9;" required>
-
-        <label>Código Detectado *</label>
-        <input type="text" id="evtCodigo" readonly style="background: #f1f5f9;" required>
-
-        <label>Tipo Tecnología *</label>
-        <input type="text" id="evtTipo" readonly style="background: #f1f5f9;" required>
-
-        <label>Evento Logístico *</label>
-        <select id="evtNombre" required>
-          <option value="Recepción">Recepción (+)</option>
-          <option value="Ingreso al almacén">Ingreso al almacén (+)</option>
-          <option value="Ubicación">Ubicación</option>
-          <option value="Movimiento interno">Movimiento interno</option>
-          <option value="Preparación de pedido">Preparación de pedido (-)</option>
-          <option value="Despacho">Despacho (-)</option>
-          <option value="Entrega">Entrega</option>
-          <option value="Devolución">Devolución (+)</option>
-          <option value="Incidencia">Incidencia</option>
-        </select>
-
-        <label>Cantidad Afectada *</label>
-        <input type="number" id="evtCantidad" value="10" min="1" required>
-
-        <label>Ubicación Física *</label>
-        <input type="text" id="evtUbicacion" value="Andén 1 - Muelle Norte" required>
-
-        <label>Actor / Responsable *</label>
-        <input type="text" id="evtActor" value="Operador Logístico" required>
-
-        <label>Observaciones</label>
-        <input type="text" id="evtObs" placeholder="Ej: Producto en buen estado">
-
-        <button type="submit">Enviar Evento a Google Sheets</button>
-      </form>
-    </div>
-
   </div>
 
-  <!-- MODULO 5: VISTA DE INVENTARIO Y REGISTROS -->
-  <div class="card" style="margin-top: 20px;">
-    <h2>5. Inventario Agrupado por Categorías</h2>
-    <button onclick="cargarDatos()" style="width: auto; padding: 6px 15px; margin-bottom: 10px;">Actualizar Inventario</button>
+  <!-- FORMULARIO DE PRODUCTO -->
+  <div class="card">
+    <h2>Registrar Nuevo Producto / Lote</h2>
+    <form id="productForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Nombre del Producto:</label>
+          <input type="text" id="prodNombre" required>
+        </div>
+        <div class="form-group">
+          <label>Categoría:</label>
+          <input type="text" id="prodCategoria">
+        </div>
+        <div class="form-group">
+          <label>Lote:</label>
+          <input type="text" id="prodLote">
+        </div>
+        <div class="form-group">
+          <label>Cantidad Inicial:</label>
+          <input type="number" id="prodStock" min="0" value="0">
+        </div>
+        <div class="form-group">
+          <label>Código de Barras:</label>
+          <input type="text" id="prodBarras">
+        </div>
+        <div class="form-group">
+          <label>Código QR:</label>
+          <input type="text" id="prodQR">
+        </div>
+        <div class="form-group">
+          <label>Código RFID:</label>
+          <input type="text" id="prodRFID">
+        </div>
+      </div>
+      <br>
+      <button type="submit">Guardar Producto</button>
+    </form>
+  </div>
+
+  <!-- FORMULARIO DE EVENTOS LOGÍSTICOS -->
+  <div class="card">
+    <h2>Registrar Evento de Trazabilidad</h2>
+    <form id="eventForm">
+      <div class="form-grid">
+        <div class="form-group">
+          <label>ID Producto:</label>
+          <input type="text" id="evtIdProd" required>
+        </div>
+        <div class="form-group">
+          <label>Tipo Identificación:</label>
+          <select id="evtTipo">
+            <option value="ID">ID Interno</option>
+            <option value="BARRAS">Código de Barras</option>
+            <option value="QR">Código QR</option>
+            <option value="RFID">RFID</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Código Leído:</label>
+          <input type="text" id="evtCodigo">
+        </div>
+        <div class="form-group">
+          <label>Evento Logístico:</label>
+          <select id="evtNombre">
+            <option value="Recepcion">Recepción en Bodega</option>
+            <option value="Almacenamiento">Almacenamiento</option>
+            <option value="Despacho">Despacho / Salida</option>
+            <option value="En Transito">En Tránsito</option>
+            <option value="Entregado">Entregado al Cliente</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Cantidad Afectada:</label>
+          <input type="number" id="evtCantidad" value="1" min="1">
+        </div>
+        <div class="form-group">
+          <label>Ubicación / Nodo:</label>
+          <input type="text" id="evtUbicacion" placeholder="Ej. Bodega Central - Sector A">
+        </div>
+        <div class="form-group">
+          <label>Actor Responsable:</label>
+          <input type="text" id="evtActor" placeholder="Operador / Chofer">
+        </div>
+      </div>
+      <div class="form-group" style="margin-top: 10px;">
+        <label>Observaciones:</label>
+        <textarea id="evtObs" rows="2"></textarea>
+      </div>
+      <br>
+      <button type="submit">Registrar Evento (Con GPS)</button>
+    </form>
+  </div>
+
+  <!-- MAPA DE UBICACIÓN Y RUTA -->
+  <div class="card">
+    <h2>Ruta y Ubicación Geográfica</h2>
+    <div style="margin-bottom: 10px;">
+      <label for="filtroProductoMapa">Filtrar Ruta por ID Producto: </label>
+      <select id="filtroProductoMapa" onchange="actualizarRutaMapa(this.value)">
+        <option value="">-- Ver todos los eventos --</option>
+      </select>
+    </div>
+    <div id="map"></div>
+  </div>
+
+  <!-- TABLAS DE CONSULTA -->
+  <div class="card">
+    <h2>Inventario Actual</h2>
     <div style="overflow-x: auto;">
-      <table id="tblInventario">
+      <table id="tblProductos">
         <thead>
           <tr>
+            <th>ID</th>
+            <th>Producto</th>
             <th>Categoría</th>
-            <th>Productos Distintos</th>
-            <th>Stock Total</th>
-            <th>Última Actualización</th>
+            <th>Lote</th>
+            <th>Stock</th>
+            <th>Barras</th>
+            <th>QR</th>
+            <th>RFID</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td colspan="4">Cargando datos...</td></tr>
-        </tbody>
+        <tbody></tbody>
       </table>
     </div>
+  </div>
 
-    <h2 style="margin-top: 25px;">Últimos Eventos Registrados</h2>
+  <div class="card">
+    <h2>Historial de Eventos</h2>
     <div style="overflow-x: auto;">
       <table id="tblEventos">
         <thead>
           <tr>
-            <th>ID Evento</th>
-            <th>Fecha/Hora</th>
+            <th>Fecha</th>
             <th>ID Producto</th>
             <th>Evento</th>
+            <th>Cantidad</th>
             <th>Ubicación</th>
             <th>Actor</th>
-            <th>Estado</th>
+            <th>Latitud</th>
+            <th>Longitud</th>
+            <th>Precisión (m)</th>
           </tr>
         </thead>
-        <tbody>
-          <tr><td colspan="7">Sin eventos recientes</td></tr>
-        </tbody>
+        <tbody></tbody>
       </table>
     </div>
   </div>
 
-  <script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqY8jcVLCTLLm1Mdytq_OPkT05CKW795Mri45ggmCTp50cqdGEor5ZyIEfT6T4BPS0/exec";
-    let html5QrcodeScanner = null;
+</div>
 
-    // REGISTRO DE PRODUCTO Y GENERACIÓN DE CÓDIGO
-    document.getElementById("prodForm").addEventListener("submit", function(e) {
-      e.preventDefault();
-      
-      const idProd = document.getElementById("idProducto").value.trim();
-      const tipo = document.getElementById("tipoIdentificacion").value;
-      const codigoGenerado = tipo === "RFID" ? `RFID-EPC-${idProd}` : idProd;
+<script>
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXX/exec";
 
-      const payload = {
-        action: "registrarProducto",
-        idProducto: idProd,
-        nombre: document.getElementById("nombre").value.trim(),
-        categoria: document.getElementById("categoria").value,
-        lote: document.getElementById("lote").value.trim(),
-        cantidad: document.getElementById("cantidad").value,
-        fechaVencimiento: document.getElementById("fechaVencimiento").value,
-        origen: document.getElementById("origen").value.trim(),
-        destino: document.getElementById("destino").value.trim(),
-        tipoIdentificacion: tipo,
-        codigoGenerado: codigoGenerado
-      };
+  let html5QrCode = null;
+  let map = null;
+  let capasMapa = [];
+  let listaProductosGlobal = [];
+  let listaEventosGlobal = [];
 
-      mostrarStatus("Guardando producto en Google Sheets...", "success");
+  window.onload = function() {
+    inicializarMapa();
+    cargarDatos();
+  };
 
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      })
-      .then(() => {
-        mostrarStatus("Producto registrado exitosamente en Google Sheets", "success");
-        renderizarCodigo(codigoGenerado, tipo);
-        cargarDatos();
-      })
-      .catch(err => mostrarStatus("Error al conectar con backend: " + err, "error"));
+  function mostrarStatus(mensaje, tipo) {
+    const box = document.getElementById("statusBox");
+    box.innerText = mensaje;
+    box.className = "status-msg " + (tipo === "success" ? "status-success" : "status-error");
+    box.style.display = "block";
+    setTimeout(() => { box.style.display = "none"; }, 5000);
+  }
+
+  function inicializarMapa() {
+    map = L.map('map').setView([0.655, -77.718], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+  }
+
+  function limpiarMapa() {
+    capasMapa.forEach(layer => map.removeLayer(layer));
+    capasMapa = [];
+  }
+
+  function actualizarRutaMapa(idProductoFiltrado) {
+    limpiarMapa();
+
+    let eventosFiltrados = listaEventosGlobal.filter(e => e.latitud && e.longitud);
+
+    if (idProductoFiltrado) {
+      eventosFiltrados = eventosFiltrados.filter(e => String(e.idProducto) === String(idProductoFiltrado));
+    }
+
+    if (eventosFiltrados.length === 0) return;
+
+    const puntosRuta = [];
+
+    eventosFiltrados.forEach((e, idx) => {
+      const lat = parseFloat(e.latitud);
+      const lon = parseFloat(e.longitud);
+
+      if (!isNaN(lat) && !isNaN(lon)) {
+        puntosRuta.push([lat, lon]);
+
+        const marker = L.marker([lat, lon]).addTo(map);
+        marker.bindPopup(`
+          <b>Producto ID:</b> ${e.idProducto}<br>
+          <b>Evento:</b> ${e.evento}<br>
+          <b>Ubicación:</b> ${e.ubicacion}<br>
+          <b>Fecha:</b> ${e.fecha ? new Date(e.fecha).toLocaleString() : ''}
+        `);
+        capasMapa.push(marker);
+      }
     });
 
-    function renderizarCodigo(valor, tipo) {
-      const container = document.getElementById("codeDisplay");
-      const codeValDisplay = document.getElementById("codeValue");
-      container.innerHTML = "";
-      codeValDisplay.innerText = `${tipo}: ${valor}`;
+    if (puntosRuta.length > 1) {
+      const lineaRuta = L.polyline(puntosRuta, { color: '#007bff', weight: 4, opacity: 0.8 }).addTo(map);
+      capasMapa.push(lineaRuta);
+      map.fitBounds(lineaRuta.getBounds(), { padding: [30, 30] });
+    } else if (puntosRuta.length === 1) {
+      map.setView(puntosRuta[0], 15);
+    }
+  }
 
-      if (tipo === "Code 128") {
-        const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-        container.appendChild(svg);
-        JsBarcode(svg, valor, { format: "CODE128", width: 2, height: 80, displayValue: true });
-      } else if (tipo === "QR") {
-        const canvas = document.createElement("canvas");
-        container.appendChild(canvas);
-        QRCode.toCanvas(canvas, valor, { width: 180 });
+  function obtenerUbicacionGPS() {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) {
+        reject("Navegador no soporta Geolocalización");
       } else {
-        container.innerHTML = `<div style="padding: 20px; background: #e0f2fe; border-radius: 6px; font-weight: bold;">[ETIQUETA RFID DETECTADA]<br>${valor}</div>`;
+        navigator.geolocation.getCurrentPosition(
+          (pos) => resolve({ lat: pos.coords.latitude, lon: pos.coords.longitude, accuracy: pos.coords.accuracy }),
+          (err) => reject(err.message),
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+        );
       }
-      document.getElementById("btnPrint").style.display = "inline-block";
-    }
+    });
+  }
 
-    // LECTOR DE CÁMARA
-    function iniciarCamara() {
-      if (html5QrcodeScanner) {
-        html5QrcodeScanner.clear();
-      }
-      html5QrcodeScanner = new Html5Qrcode("reader");
-      html5QrcodeScanner.start(
-        { facingMode: "environment" },
-        { fps: 10, qrbox: 250 },
-        (decodedText, decodedResult) => {
-          completarFormularioEvento(decodedText, decodedResult.result.format.formatName || "QR/1D");
-          html5QrcodeScanner.stop();
-          mostrarStatus("Código leído correctamente", "success");
-        },
-        (errorMessage) => {}
-      ).catch(err => mostrarStatus("Error o permiso denegado al acceder a la cámara: " + err, "error"));
-    }
+  function iniciarCamara() {
+    document.getElementById("reader").style.display = "block";
+    html5QrCode = new Html5Qrcode("reader");
 
-    // LECTURA DESDE IMAGEN
-    function leerDesdeImagen(fileInput) {
-      if (fileInput.files.length === 0) return;
-      const imageFile = fileInput.files[0];
-      const html5QrCode = new Html5Qrcode("reader");
-      html5QrCode.scanFile(imageFile, true)
-        .then(decodedText => {
-          completarFormularioEvento(decodedText, "Archivo de Imagen");
-          mostrarStatus("Código extraído exitosamente de la imagen", "success");
-        })
-        .catch(err => mostrarStatus("No se pudo leer un código válido en la imagen", "error"));
-    }
+    html5QrCode.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        completarLectura(decodedText);
+        detenerCamara();
+      },
+      () => {}
+    ).catch(err => mostrarStatus("Error al abrir cámara: " + err, "error"));
+  }
 
-    // SIMULADOR RFID
-    function simularLecturaRFID() {
-      const val = document.getElementById("rfidInput").value.trim();
-      if (!val) {
-        mostrarStatus("Ingrese un identificador RFID válido", "error");
+  function detenerCamara() {
+    if (html5QrCode) {
+      html5QrCode.stop().then(() => {
+        document.getElementById("reader").style.display = "none";
+      }).catch(err => console.log(err));
+    }
+  }
+
+  function procesarLecturaRFID(codigo) {
+    if (codigo.trim() !== "") {
+      completarLectura(codigo);
+      document.getElementById("rfidInput").value = "";
+    }
+  }
+
+  function completarLectura(codigo) {
+    document.getElementById("evtCodigo").value = codigo;
+    document.getElementById("prodRFID").value = codigo;
+
+    const prodEncontrado = listaProductosGlobal.find(p => 
+      p.idProducto == codigo || p.codigoBarras == codigo || p.codigoQR == codigo || p.codigoRFID == codigo
+    );
+
+    if (prodEncontrado) {
+      document.getElementById("evtIdProd").value = prodEncontrado.idProducto;
+      mostrarStatus("Producto detectado: " + prodEncontrado.nombreProducto, "success");
+    } else {
+      mostrarStatus("Código leído: " + codigo, "success");
+    }
+  }
+
+  // REGISTRO DE PRODUCTO
+  document.getElementById("productForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const payload = {
+      action: "crearProducto",
+      nombreProducto: document.getElementById("prodNombre").value,
+      categoria: document.getElementById("prodCategoria").value,
+      lote: document.getElementById("prodLote").value,
+      stockInicial: document.getElementById("prodStock").value,
+      codigoBarras: document.getElementById("prodBarras").value,
+      codigoQR: document.getElementById("prodQR").value,
+      codigoRFID: document.getElementById("prodRFID").value
+    };
+
+    mostrarStatus("Guardando producto...", "success");
+
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      mostrarStatus("Producto guardado correctamente", "success");
+      document.getElementById("productForm").reset();
+      cargarDatos();
+    })
+    .catch(err => mostrarStatus("Error al guardar producto: " + err, "error"));
+  });
+
+  // REGISTRO DE EVENTO CON VALIDACIÓN DE STOCK Y TRAZADO GPS
+  document.getElementById("eventForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const idProd = document.getElementById("evtIdProd").value;
+    const eventoSel = document.getElementById("evtNombre").value;
+    const cantAfectada = parseInt(document.getElementById("evtCantidad").value) || 0;
+
+    // VALIDACIÓN DE STOCK DISPONIBLE
+    if (eventoSel === "Despacho" || eventoSel === "Entregado") {
+      const prod = listaProductosGlobal.find(p => String(p.idProducto) === String(idProd));
+      if (prod && parseInt(prod.stockActual) < cantAfectada) {
+        mostrarStatus(`Stock insuficiente. Disponible: ${prod.stockActual}, Intenta retirar: ${cantAfectada}`, "error");
         return;
       }
-      const idLimpio = val.replace("RFID-EPC-", "");
-      completarFormularioEvento(idLimpio, "RFID Simulada");
-      mostrarStatus("Etiqueta RFID detectada correctamente", "success");
     }
 
-    function completarFormularioEvento(idProd, tipo) {
-      document.getElementById("evtIdProd").value = idProd;
-      document.getElementById("evtCodigo").value = idProd;
-      document.getElementById("evtTipo").value = tipo;
+    const payload = {
+      action: "registrarEvento",
+      idProducto: idProd,
+      tipoIdentificacion: document.getElementById("evtTipo").value,
+      codigoLeido: document.getElementById("evtCodigo").value,
+      evento: eventoSel,
+      cantidadAfectada: cantAfectada,
+      ubicacion: document.getElementById("evtUbicacion").value,
+      actor: document.getElementById("evtActor").value,
+      observacion: document.getElementById("evtObs").value,
+      estado: "Exitoso"
+    };
+
+    mostrarStatus("Obteniendo GPS y procesando evento...", "success");
+
+    try {
+      const coords = await obtenerUbicacionGPS();
+      payload.latitud = coords.lat;
+      payload.longitud = coords.lon;
+      payload.precision = coords.accuracy;
+    } catch (geoErr) {
+      console.warn("Registrando sin GPS:", geoErr);
     }
 
-    // ENVÍO DE EVENTO LOGÍSTICO
-    document.getElementById("eventForm").addEventListener("submit", function(e) {
-      e.preventDefault();
+    fetch(SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    })
+    .then(() => {
+      mostrarStatus("Evento registrado correctamente con GPS", "success");
+      document.getElementById("eventForm").reset();
+      cargarDatos();
+    })
+    .catch(err => mostrarStatus("Error al guardar el evento: " + err, "error"));
+  });
 
-      const payload = {
-        action: "registrarEvento",
-        idProducto: document.getElementById("evtIdProd").value,
-        tipoIdentificacion: document.getElementById("evtTipo").value,
-        codigoLeido: document.getElementById("evtCodigo").value,
-        evento: document.getElementById("evtNombre").value,
-        cantidadAfectada: document.getElementById("evtCantidad").value,
-        ubicacion: document.getElementById("evtUbicacion").value,
-        actor: document.getElementById("evtActor").value,
-        observacion: document.getElementById("evtObs").value,
-        estado: "Exitoso"
-      };
+  function cargarDatos() {
+    fetch(SCRIPT_URL + "?action=obtenerDatos")
+      .then(res => res.json())
+      .then(data => {
+        listaProductosGlobal = data.productos || [];
+        listaEventosGlobal = data.eventos || [];
 
-      mostrarStatus("Procesando evento logístico...", "success");
-
-      fetch(SCRIPT_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        renderizarTablaProductos(listaProductosGlobal);
+        renderizarTablaEventos(listaEventosGlobal);
+        poblarSelectorProductos(listaProductosGlobal);
+        actualizarRutaMapa(document.getElementById("filtroProductoMapa").value);
       })
-      .then(() => {
-        mostrarStatus("Evento registrado e inventario actualizado", "success");
-        cargarDatos();
-      })
-      .catch(err => mostrarStatus("Error al guardar el evento: " + err, "error"));
+      .catch(err => console.error("Error cargando datos:", err));
+  }
+
+  function poblarSelectorProductos(productos) {
+    const select = document.getElementById("filtroProductoMapa");
+    const valActual = select.value;
+    select.innerHTML = '<option value="">-- Ver todos los eventos --</option>';
+
+    productos.forEach(p => {
+      const opt = document.createElement("option");
+      opt.value = p.idProducto;
+      opt.textContent = `${p.idProducto} - ${p.nombreProducto}`;
+      select.appendChild(opt);
     });
 
-    // CARGAR Y CONSOLIDAR INVENTARIO
-    function cargarDatos() {
-      fetch(SCRIPT_URL)
-        .then(res => res.json())
-        .then(data => {
-          if (data.status === "success") {
-            actualizarTablaInventario(data.productos);
-            actualizarTablaEventos(data.eventos);
-          }
-        })
-        .catch(err => console.log("Carga diferida o cors restricción"));
-    }
+    select.value = valActual;
+  }
 
-    function actualizarTablaInventario(productos) {
-      const tbody = document.querySelector("#tblInventario tbody");
-      tbody.innerHTML = "";
+  function renderizarTablaProductos(productos) {
+    const tbody = document.querySelector("#tblProductos tbody");
+    tbody.innerHTML = "";
 
-      if (!productos || productos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="4">No hay datos en el inventario.</td></tr>';
-        return;
-      }
+    productos.forEach(p => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${p.idProducto || ''}</td>
+        <td>${p.nombreProducto || ''}</td>
+        <td>${p.categoria || ''}</td>
+        <td>${p.lote || ''}</td>
+        <td><b>${p.stockActual || 0}</b></td>
+        <td>${p.codigoBarras || ''}</td>
+        <td>${p.codigoQR || ''}</td>
+        <td>${p.codigoRFID || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-      const categorias = {};
-      productos.forEach(p => {
-        const cat = p.CATEGORIA || "Sin Categoría";
-        if (!categorias[cat]) {
-          categorias[cat] = { distintas: 0, total: 0 };
-        }
-        categorias[cat].distintas += 1;
-        categorias[cat].total += Number(p.CANTIDAD || 0);
-      });
+  function renderizarTablaEventos(eventos) {
+    const tbody = document.querySelector("#tblEventos tbody");
+    tbody.innerHTML = "";
 
-      for (let cat in categorias) {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td><strong>${cat}</strong></td>
-          <td>${categorias[cat].distintas}</td>
-          <td>${categorias[cat].total}</td>
-          <td>${new Date().toLocaleTimeString()}</td>
-        `;
-        tbody.appendChild(tr);
-      }
-    }
+    eventos.forEach(e => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${e.fecha ? new Date(e.fecha).toLocaleString() : ''}</td>
+        <td>${e.idProducto || ''}</td>
+        <td>${e.evento || ''}</td>
+        <td>${e.cantidadAfectada || ''}</td>
+        <td>${e.ubicacion || ''}</td>
+        <td>${e.actor || ''}</td>
+        <td>${e.latitud || ''}</td>
+        <td>${e.longitud || ''}</td>
+        <td>${e.precision || ''}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+</script>
 
-    function actualizarTablaEventos(eventos) {
-      const tbody = document.querySelector("#tblEventos tbody");
-      tbody.innerHTML = "";
-
-      if (!eventos || eventos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7">No se han registrado eventos.</td></tr>';
-        return;
-      }
-
-      eventos.slice(-5).reverse().forEach(e => {
-        const tr = document.createElement("tr");
-        tr.innerHTML = `
-          <td>${e["ID EVENTO"] || "EVT-OK"}</td>
-          <td>${e["FECHA HORA"] || "Reciente"}</td>
-          <td>${e["ID PRODUCTO"] || "-"}</td>
-          <td>${e["EVENTO"] || "-"}</td>
-          <td>${e["UBICACION"] || "-"}</td>
-          <td>${e["ACTOR"] || "-"}</td>
-          <td><span style="color: green; font-weight: bold;">${e["ESTADO"] || "Exitoso"}</span></td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function mostrarStatus(msg, type) {
-      const div = document.getElementById("statusMsg");
-      div.className = `status-msg status-${type}`;
-      div.innerText = msg;
-      div.style.display = "block";
-      setTimeout(() => { div.style.display = "none"; }, 4000);
-    }
-
-    // Carga inicial al abrir la app
-    window.onload = cargarDatos;
-  </script>
 </body>
 </html>
