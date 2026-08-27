@@ -21,8 +21,26 @@
       color: #333;
     }
 
-    h1, h2 {
+    /* BANNER CON FONDO AZUL PARA EL TÍTULO PRINCIPAL */
+    .header-banner {
+      background-color: #1f3a60;
+      color: white;
+      padding: 20px;
+      border-radius: 8px;
+      text-align: center;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    }
+
+    .header-banner h1 {
+      margin: 0;
+      color: white;
+      font-size: 2em;
+    }
+
+    h2 {
       color: #1f3a60;
+      margin-top: 0;
     }
 
     .container {
@@ -135,27 +153,15 @@
 <body>
 
 <div class="container">
-  <h1>Trazabilidad Logística Inteligente</h1>
+
+  <!-- BANNER TÍTULO -->
+  <div class="header-banner">
+    <h1>Trazabilidad Logística Inteligente</h1>
+  </div>
 
   <div id="statusBox" class="status-msg"></div>
 
-  <!-- LECTOR QR / BARRAS / RFID -->
-  <div class="card">
-    <h2>Lectura y Captura Automática</h2>
-    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-      <button class="btn-secondary" onclick="iniciarCamara()">Escanear QR / Código de Barras</button>
-      <button class="btn-secondary" onclick="detenerCamara()">Detener Cámara</button>
-    </div>
-
-    <div id="reader"></div>
-
-    <div class="form-group" style="margin-top: 15px;">
-      <label>Ingreso / Modu-RFID / Lector USB:</label>
-      <input type="text" id="rfidInput" placeholder="Escanee la tarjeta RFID o presione Enter..." onchange="procesarLecturaRFID(this.value)">
-    </div>
-  </div>
-
-  <!-- FORMULARIO DE PRODUCTO -->
+  <!-- 1. FORMULARIO DE PRODUCTO (AHORA PRIMERO) -->
   <div class="card">
     <h2>Registrar Nuevo Producto / Lote</h2>
     <form id="productForm">
@@ -194,7 +200,23 @@
     </form>
   </div>
 
-  <!-- FORMULARIO DE EVENTOS LOGÍSTICOS -->
+  <!-- 2. LECTOR QR / BARRAS / RFID (AHORA SEGUNDO) -->
+  <div class="card">
+    <h2>Lectura y Captura Automática</h2>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <button class="btn-secondary" onclick="iniciarCamara()">Escanear QR / Código de Barras</button>
+      <button class="btn-secondary" onclick="detenerCamara()">Detener Cámara</button>
+    </div>
+
+    <div id="reader"></div>
+
+    <div class="form-group" style="margin-top: 15px;">
+      <label>Ingreso / Modu-RFID / Lector USB:</label>
+      <input type="text" id="rfidInput" placeholder="Escanee la tarjeta RFID o presione Enter..." onchange="procesarLecturaRFID(this.value)">
+    </div>
+  </div>
+
+  <!-- 3. FORMULARIO DE EVENTOS LOGÍSTICOS -->
   <div class="card">
     <h2>Registrar Evento de Trazabilidad</h2>
     <form id="eventForm">
@@ -307,7 +329,7 @@
 </div>
 
 <script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz_XXXXXXXXXXXX/exec";
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkWftDvsDj3MUKgHecxAf7GrdXWEA7IvRT7A-XzkLi0kGq-M6m_pNlEh9_c6wnKANr/exec";
 
   let html5QrCode = null;
   let map = null;
@@ -441,7 +463,6 @@
     }
   }
 
-  // REGISTRO DE PRODUCTO
   document.getElementById("productForm").addEventListener("submit", function(e) {
     e.preventDefault();
 
@@ -472,7 +493,6 @@
     .catch(err => mostrarStatus("Error al guardar producto: " + err, "error"));
   });
 
-  // REGISTRO DE EVENTO CON VALIDACIÓN DE STOCK Y TRAZADO GPS
   document.getElementById("eventForm").addEventListener("submit", async function(e) {
     e.preventDefault();
 
@@ -480,7 +500,6 @@
     const eventoSel = document.getElementById("evtNombre").value;
     const cantAfectada = parseInt(document.getElementById("evtCantidad").value) || 0;
 
-    // VALIDACIÓN DE STOCK DISPONIBLE
     if (eventoSel === "Despacho" || eventoSel === "Entregado") {
       const prod = listaProductosGlobal.find(p => String(p.idProducto) === String(idProd));
       if (prod && parseInt(prod.stockActual) < cantAfectada) {
