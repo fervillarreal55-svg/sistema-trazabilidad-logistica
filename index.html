@@ -186,7 +186,7 @@
 
   <div id="statusBox" class="status-msg"></div>
 
-  <!-- 1. REGISTRAR NUEVO PRODUCTO / LOTE (COMPLETO CON GENERADOR Y CÁMARA) -->
+  <!-- REGISTRAR NUEVO PRODUCTO / LOTE -->
   <div class="card">
     <h2>Registrar Nuevo Producto / Lote</h2>
     <form id="productForm">
@@ -233,7 +233,6 @@
         </div>
       </div>
 
-      <!-- Opciones para Generación y Captura de Código -->
       <div style="margin-top: 15px; background: #eef2f7; padding: 15px; border-radius: 6px;">
         <label><b>Opciones de Generación y Captura de Código:</b></label>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
@@ -246,10 +245,8 @@
           <button type="button" class="btn-secondary" style="background-color: #6c757d;" onclick="detenerCamaraProducto()">Cerrar Cámara</button>
         </div>
 
-        <!-- Visor de Cámara del Registro -->
         <div id="readerProducto"></div>
 
-        <!-- Área de Previsualización del Código Generado -->
         <div class="code-preview-box">
           <span style="font-size: 0.9em; color: #666;">Vista Previa del Código Generado:</span>
           <div id="contenedorVisualizacion">
@@ -264,7 +261,7 @@
     </form>
   </div>
 
-  <!-- 2. LECTURA Y CAPTURA AUTOMÁTICA -->
+  <!-- LECTURA Y CAPTURA AUTOMÁTICA -->
   <div class="card">
     <h2>Lectura y Captura Automática</h2>
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -280,7 +277,7 @@
     </div>
   </div>
 
-  <!-- 3. REGISTRAR EVENTO DE TRAZABILIDAD -->
+  <!-- REGISTRAR EVENTO DE TRAZABILIDAD -->
   <div class="card">
     <h2>Registrar Evento de Trazabilidad</h2>
     <form id="eventForm">
@@ -393,7 +390,7 @@
 </div>
 
 <script>
-  // REEMPLAZA ESTA URL CON LA DE TU GOOGLE APPS SCRIPT ACUMULADO (/exec)
+  // PEGA AQUÍ TU URL DE APPS SCRIPT OBTENIDA EN EL PASO 1
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkWftDvsDj3MUKgHecxAf7GrdXWEA7IvRT7A-XzkLi0kGq-M6m_pNlEh9_c6wnKANr/exec";
 
   let html5QrCode = null;
@@ -597,7 +594,7 @@
       codigoRFID: document.getElementById("prodRFID").value
     };
 
-    mostrarStatus("Guardando producto...", "success");
+    mostrarStatus("Guardando producto en la base de datos...", "success");
 
     fetch(SCRIPT_URL, {
       method: "POST",
@@ -606,9 +603,9 @@
       body: JSON.stringify(payload)
     })
     .then(() => {
-      mostrarStatus("Producto guardado correctamente", "success");
+      mostrarStatus("Producto enviado con éxito", "success");
       document.getElementById("productForm").reset();
-      cargarDatos();
+      setTimeout(cargarDatos, 1500);
     })
     .catch(err => mostrarStatus("Error al guardar producto: " + err, "error"));
   });
@@ -659,9 +656,9 @@
       body: JSON.stringify(payload)
     })
     .then(() => {
-      mostrarStatus("Evento registrado correctamente con GPS", "success");
+      mostrarStatus("Evento registrado correctamente", "success");
       document.getElementById("eventForm").reset();
-      cargarDatos();
+      setTimeout(cargarDatos, 1500);
     })
     .catch(err => mostrarStatus("Error al guardar el evento: " + err, "error"));
   });
