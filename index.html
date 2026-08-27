@@ -5,6 +5,10 @@
   <title>Trazabilidad Logística Inteligente</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
+  <!-- Librería para generar Código de Barras -->
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
+  <!-- Librería para generar Código QR -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
   <!-- Scanner de Barras / QR -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
@@ -21,7 +25,6 @@
       color: #333;
     }
 
-    /* BANNER CON FONDO AZUL PARA EL TÍTULO PRINCIPAL */
     .header-banner {
       background-color: #1f3a60;
       color: white;
@@ -101,7 +104,16 @@
       background-color: #0069d9;
     }
 
-    #reader {
+    .btn-action {
+      background-color: #17a2b8;
+      margin-top: 5px;
+    }
+
+    .btn-action:hover {
+      background-color: #138496;
+    }
+
+    #reader, #readerProducto {
       width: 100%;
       max-width: 400px;
       margin: 10px auto;
@@ -148,59 +160,111 @@
       background-color: #f8d7da;
       color: #721c24;
     }
+
+    .code-preview-box {
+      border: 2px dashed #007bff;
+      border-radius: 8px;
+      padding: 15px;
+      text-align: center;
+      background-color: #f8f9fa;
+      margin-top: 15px;
+    }
+
+    #barcodeCanvas, #qrCanvas {
+      max-width: 100%;
+      margin: 10px auto;
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- BANNER TÍTULO -->
   <div class="header-banner">
     <h1>Trazabilidad Logística Inteligente</h1>
   </div>
 
   <div id="statusBox" class="status-msg"></div>
 
-  <!-- 1. FORMULARIO DE PRODUCTO (AHORA PRIMERO) -->
+  <!-- 1. REGISTRAR NUEVO PRODUCTO / LOTE (COMPLETO CON GENERADOR Y CÁMARA) -->
   <div class="card">
     <h2>Registrar Nuevo Producto / Lote</h2>
     <form id="productForm">
       <div class="form-grid">
         <div class="form-group">
           <label>Nombre del Producto:</label>
-          <input type="text" id="prodNombre" required>
+          <input type="text" id="prodNombre" placeholder="Ej. Laptop HP, Papa Súper Chola" required>
         </div>
+        
         <div class="form-group">
           <label>Categoría:</label>
-          <input type="text" id="prodCategoria">
+          <select id="prodCategoria">
+            <option value="Tecnología">Tecnología</option>
+            <option value="Agrícola">Agrícola</option>
+            <option value="Alimentos">Alimentos</option>
+            <option value="Repuestos / Mecánica">Repuestos / Mecánica</option>
+            <option value="General">General</option>
+          </select>
         </div>
+
         <div class="form-group">
           <label>Lote:</label>
-          <input type="text" id="prodLote">
+          <input type="text" id="prodLote" placeholder="Ej. L-2026-001">
         </div>
+
         <div class="form-group">
           <label>Cantidad Inicial:</label>
-          <input type="number" id="prodStock" min="0" value="0">
+          <input type="number" id="prodStock" min="0" value="0" placeholder="0">
         </div>
+
         <div class="form-group">
           <label>Código de Barras:</label>
-          <input type="text" id="prodBarras">
+          <input type="text" id="prodBarras" placeholder="Ej. 786100001234">
         </div>
+
         <div class="form-group">
           <label>Código QR:</label>
-          <input type="text" id="prodQR">
+          <input type="text" id="prodQR" placeholder="Ej. QR-PROD-001">
         </div>
+
         <div class="form-group">
           <label>Código RFID:</label>
-          <input type="text" id="prodRFID">
+          <input type="text" id="prodRFID" placeholder="Escanee o ingrese RFID">
         </div>
       </div>
+
+      <!-- Opciones para Generación y Captura de Código -->
+      <div style="margin-top: 15px; background: #eef2f7; padding: 15px; border-radius: 6px;">
+        <label><b>Opciones de Generación y Captura de Código:</b></label>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+          <select id="tipoCodigoGenerar" style="width: auto;">
+            <option value="BARRAS">Generar Código de Barras</option>
+            <option value="QR">Generar Código QR</option>
+          </select>
+          <button type="button" class="btn-action" onclick="generarCodigoVista()">Generar Vista Previa</button>
+          <button type="button" class="btn-secondary" onclick="iniciarCamaraProducto()">Abrir Cámara para Captura</button>
+          <button type="button" class="btn-secondary" style="background-color: #6c757d;" onclick="detenerCamaraProducto()">Cerrar Cámara</button>
+        </div>
+
+        <!-- Visor de Cámara del Registro -->
+        <div id="readerProducto"></div>
+
+        <!-- Área de Previsualización del Código Generado -->
+        <div class="code-preview-box">
+          <span style="font-size: 0.9em; color: #666;">Vista Previa del Código Generado:</span>
+          <div id="contenedorVisualizacion">
+            <svg id="barcodeCanvas" style="display:none;"></svg>
+            <canvas id="qrCanvas" style="display:none;"></canvas>
+          </div>
+        </div>
+      </div>
+
       <br>
       <button type="submit">Guardar Producto</button>
     </form>
   </div>
 
-  <!-- 2. LECTOR QR / BARRAS / RFID (AHORA SEGUNDO) -->
+  <!-- 2. LECTURA Y CAPTURA AUTOMÁTICA -->
   <div class="card">
     <h2>Lectura y Captura Automática</h2>
     <div style="display: flex; gap: 10px; flex-wrap: wrap;">
@@ -216,14 +280,14 @@
     </div>
   </div>
 
-  <!-- 3. FORMULARIO DE EVENTOS LOGÍSTICOS -->
+  <!-- 3. REGISTRAR EVENTO DE TRAZABILIDAD -->
   <div class="card">
     <h2>Registrar Evento de Trazabilidad</h2>
     <form id="eventForm">
       <div class="form-grid">
         <div class="form-group">
           <label>ID Producto:</label>
-          <input type="text" id="evtIdProd" required>
+          <input type="text" id="evtIdProd" placeholder="Ej. PROD-1001" required>
         </div>
         <div class="form-group">
           <label>Tipo Identificación:</label>
@@ -236,7 +300,7 @@
         </div>
         <div class="form-group">
           <label>Código Leído:</label>
-          <input type="text" id="evtCodigo">
+          <input type="text" id="evtCodigo" placeholder="Código escaneado">
         </div>
         <div class="form-group">
           <label>Evento Logístico:</label>
@@ -263,7 +327,7 @@
       </div>
       <div class="form-group" style="margin-top: 10px;">
         <label>Observaciones:</label>
-        <textarea id="evtObs" rows="2"></textarea>
+        <textarea id="evtObs" rows="2" placeholder="Notas sobre el estado del producto o entrega..."></textarea>
       </div>
       <br>
       <button type="submit">Registrar Evento (Con GPS)</button>
@@ -329,9 +393,11 @@
 </div>
 
 <script>
+  // REEMPLAZA ESTA URL CON LA DE TU GOOGLE APPS SCRIPT ACUMULADO (/exec)
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwkWftDvsDj3MUKgHecxAf7GrdXWEA7IvRT7A-XzkLi0kGq-M6m_pNlEh9_c6wnKANr/exec";
 
   let html5QrCode = null;
+  let html5QrCodeProd = null;
   let map = null;
   let capasMapa = [];
   let listaProductosGlobal = [];
@@ -348,6 +414,60 @@
     box.className = "status-msg " + (tipo === "success" ? "status-success" : "status-error");
     box.style.display = "block";
     setTimeout(() => { box.style.display = "none"; }, 5000);
+  }
+
+  function generarCodigoVista() {
+    const tipo = document.getElementById("tipoCodigoGenerar").value;
+    const barrasVal = document.getElementById("prodBarras").value.trim();
+    const qrVal = document.getElementById("prodQR").value.trim();
+    const nombreVal = document.getElementById("prodNombre").value.trim() || "PROD-GENERICO";
+
+    const svgBar = document.getElementById("barcodeCanvas");
+    const canvasQR = document.getElementById("qrCanvas");
+
+    svgBar.style.display = "none";
+    canvasQR.style.display = "none";
+
+    if (tipo === "BARRAS") {
+      const valorUsar = barrasVal || "123456789012";
+      svgBar.style.display = "block";
+      JsBarcode("#barcodeCanvas", valorUsar, { format: "CODE128", width: 2, height: 60 });
+      document.getElementById("prodBarras").value = valorUsar;
+      mostrarStatus("Código de Barras generado correctamente", "success");
+    } else if (tipo === "QR") {
+      const valorUsar = qrVal || nombreVal;
+      canvasQR.style.display = "block";
+      QRCode.toCanvas(canvasQR, valorUsar, { width: 150 }, function (error) {
+        if (error) console.error(error);
+      });
+      document.getElementById("prodQR").value = valorUsar;
+      mostrarStatus("Código QR generado correctamente", "success");
+    }
+  }
+
+  function iniciarCamaraProducto() {
+    document.getElementById("readerProducto").style.display = "block";
+    html5QrCodeProd = new Html5Qrcode("readerProducto");
+
+    html5QrCodeProd.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      (decodedText) => {
+        document.getElementById("prodBarras").value = decodedText;
+        document.getElementById("prodQR").value = decodedText;
+        mostrarStatus("Código capturado desde cámara: " + decodedText, "success");
+        detenerCamaraProducto();
+      },
+      () => {}
+    ).catch(err => mostrarStatus("Error al abrir cámara: " + err, "error"));
+  }
+
+  function detenerCamaraProducto() {
+    if (html5QrCodeProd) {
+      html5QrCodeProd.stop().then(() => {
+        document.getElementById("readerProducto").style.display = "none";
+      }).catch(err => console.log(err));
+    }
   }
 
   function inicializarMapa() {
@@ -376,7 +496,7 @@
 
     const puntosRuta = [];
 
-    eventosFiltrados.forEach((e, idx) => {
+    eventosFiltrados.forEach((e) => {
       const lat = parseFloat(e.latitud);
       const lon = parseFloat(e.longitud);
 
